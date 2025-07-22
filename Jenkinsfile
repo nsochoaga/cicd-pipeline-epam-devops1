@@ -16,22 +16,23 @@ pipeline {
         stage('Build') {
             steps {
                 echo "Installing dependencies..."
-                sh 'npm install'
+                bat 'npm install'
             }
         }
 
         stage('Test') {
             steps {
                 echo "Running tests..."
-                sh './scripts/test.sh'
+                bat 'bash scripts/test.sh' // ← si tienes Git Bash o WSL
+                // o reemplaza por comandos nativos de Windows si no tienes bash
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh "docker build -t ${IMAGE_NAME} ."
-                    sh "docker images | grep node-${env.BRANCH_NAME}"
+                    bat "docker build -t ${env.IMAGE_NAME} ."
+                    bat "docker images"
                 }
             }
         }
@@ -39,12 +40,9 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    // Detener contenedor del mismo entorno si existe
-                    sh "docker rm -f ${env.BRANCH_NAME}_app || true"
-
-                    // Correr nuevo contenedor
-                    sh "docker run -d -p ${PORT}:${PORT} --name ${env.BRANCH_NAME}_app ${IMAGE_NAME}"
-                    echo "App deployed at http://localhost:${PORT}"
+                    bat "docker rm -f ${env.BRANCH_NAME}_app || echo No container to remove"
+                    bat "docker run -d -p ${env.PORT}:${env.PORT} --name ${env.BRANCH_NAME}_app ${env.IMAGE_NAME}"
+                    echo "App deployed at http://localhost:${env.PORT}"
                 }
             }
         }
